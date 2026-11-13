@@ -1,0 +1,7 @@
+target/
+.maven/
+.idea/
+.vscode/
+*.iml
+*.log
+.env
