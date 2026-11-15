@@ -1,5 +1,6 @@
 package cl.nutrivida.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -61,5 +62,14 @@ public class Usuario {
 
     public String getRol() {
         return rol;
+    }
+
+    @JsonIgnore
+    public String getClaveHash() {
+        return claveHash;
+    }
+
+    public boolean isActivo() {
+        return activo;
     }
 }

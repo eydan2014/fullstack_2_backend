@@ -8,17 +8,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class RegistroPacienteService {
     private final UsuarioRepository usuarios;
-    private final BCryptPasswordEncoder codificador = new BCryptPasswordEncoder();
+    private final PasswordEncoder codificador;
 
-    public RegistroPacienteService(UsuarioRepository usuarios) {
+    public RegistroPacienteService(UsuarioRepository usuarios, PasswordEncoder codificador) {
         this.usuarios = usuarios;
+        this.codificador = codificador;
     }
 
     public PacienteRegistrado registrar(RegistroPaciente datos) {
