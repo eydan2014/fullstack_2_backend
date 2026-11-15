@@ -1,7 +1,7 @@
 package cl.nutrivida.config;
 
-import cl.nutrivida.model.Usuario;
-import cl.nutrivida.repository.UsuarioRepository;
+import cl.nutrivida.model.Sesion;
+import cl.nutrivida.repository.SesionRepository;
 import jakarta.servlet.DispatcherType;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -81,12 +81,13 @@ public class SeguridadConfig {
                 new JwtIssuerValidator(EMISOR),
                 new JwtAudienceValidator(AUDIENCIA),
                 new JwtClaimValidator<Instant>(JwtClaimNames.EXP, Objects::nonNull),
-                new JwtClaimValidator<String>(JwtClaimNames.SUB, id -> id != null && !id.isBlank()))));
+                new JwtClaimValidator<String>(JwtClaimNames.SUB, id -> id != null && !id.isBlank()),
+                new JwtClaimValidator<String>("sid", id -> id != null && !id.isBlank()))));
         return decodificador;
     }
 
     @Bean
-    SecurityFilterChain seguridad(HttpSecurity http, UsuarioRepository usuarios) throws Exception {
+    SecurityFilterChain seguridad(HttpSecurity http, SesionRepository sesiones) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
@@ -97,18 +98,20 @@ public class SeguridadConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/servicios", "/api/v1/servicios/*").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/api/v1/servicios", "/api/v1/servicios/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/registro", "/api/v1/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh", "/api/v1/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/sesion").hasRole("PACIENTE")
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(api -> api.jwt(jwt -> jwt
-                        .jwtAuthenticationConverter(token -> autenticar(token, usuarios))))
+                        .jwtAuthenticationConverter(token -> autenticar(token, sesiones))))
                 .build();
     }
 
-    private JwtAuthenticationToken autenticar(Jwt token, UsuarioRepository usuarios) {
-        Usuario usuario = usuarios.findById(token.getSubject())
-                .filter(Usuario::isActivo)
-                .filter(cuenta -> cuenta.getRol().equals(token.getClaimAsString("rol")))
+    private JwtAuthenticationToken autenticar(Jwt token, SesionRepository sesiones) {
+        Sesion sesion = sesiones.findById(token.getClaimAsString("sid"))
+                .filter(cuenta -> cuenta.vigente(Instant.now()))
+                .filter(cuenta -> cuenta.getUsuario().getId().equals(token.getSubject())
+                        && cuenta.getRol().equals(token.getClaimAsString("rol")))
                 .orElseThrow(() -> new InvalidBearerTokenException("Sesion no valida."));
-        return new JwtAuthenticationToken(token, List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getRol())));
+        return new JwtAuthenticationToken(token, List.of(new SimpleGrantedAuthority("ROLE_" + sesion.getRol())));
     }
 }
