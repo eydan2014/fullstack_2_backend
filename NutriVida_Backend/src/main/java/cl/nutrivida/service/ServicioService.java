@@ -2,6 +2,7 @@ package cl.nutrivida.service;
 
 import cl.nutrivida.dto.DatosServicio;
 import cl.nutrivida.model.Servicio;
+import cl.nutrivida.repository.ConsultaCitasRepository;
 import cl.nutrivida.repository.ServicioRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityManager;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,12 +20,14 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class ServicioService {
     private final ServicioRepository repositorio;
+    private final ConsultaCitasRepository citas;
 
     @PersistenceContext
     private EntityManager entidades;
 
-    public ServicioService(ServicioRepository repositorio) {
+    public ServicioService(ServicioRepository repositorio, ConsultaCitasRepository citas) {
         this.repositorio = repositorio;
+        this.citas = citas;
     }
 
     public List<Servicio> listar() {
@@ -72,8 +76,25 @@ public class ServicioService {
     @Transactional
     public Servicio cambiarEstado(String id, boolean activo) {
         Servicio servicio = bloquear(normalizarCodigo(id));
+        if (!activo && servicio.isActivo()) {
+            comprobarBaja(servicio.getId());
+        }
         servicio.cambiarEstado(activo);
         return servicio;
+    }
+
+    private void comprobarBaja(String id) {
+        boolean hayCitasActivas;
+        try {
+            hayCitasActivas = citas.tieneCitasActivas(id);
+        } catch (DataAccessException error) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "No se pudo comprobar las citas del servicio.", error);
+        }
+        if (hayCitasActivas) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "El servicio tiene citas activas. Cancela o atiende esas citas primero.");
+        }
     }
 
     private Servicio bloquear(String id) {

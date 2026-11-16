@@ -68,6 +68,8 @@ public class ServicioController {
 
     @PatchMapping("/servicios/{id}/estado")
     @SecurityRequirement(name = "jwt")
+    @ApiResponse(responseCode = "409", description = "El servicio tiene citas activas", content = @Content)
+    @ApiResponse(responseCode = "503", description = "No se pudo comprobar las citas del servicio", content = @Content)
     public Servicio estado(@PathVariable("id") String id, @Valid @RequestBody ServicioEstado estado) {
         return servicio.cambiarEstado(id, estado.activo());
     }
@@ -75,6 +77,8 @@ public class ServicioController {
     @DeleteMapping("/servicios/{id}")
     @SecurityRequirement(name = "jwt")
     @ApiResponse(responseCode = "204", description = "Servicio desactivado", content = @Content)
+    @ApiResponse(responseCode = "409", description = "El servicio tiene citas activas", content = @Content)
+    @ApiResponse(responseCode = "503", description = "No se pudo comprobar las citas del servicio", content = @Content)
     public ResponseEntity<Void> desactivar(@PathVariable("id") String id) {
         servicio.cambiarEstado(id, false);
         return ResponseEntity.noContent().build();
