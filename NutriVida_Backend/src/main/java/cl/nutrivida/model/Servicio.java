@@ -22,6 +22,30 @@ public class Servicio {
 
     private boolean activo;
 
+    protected Servicio() {
+    }
+
+    public Servicio(String id, String nombre, String descripcion, String tipo, String modalidad,
+                    BigDecimal precio, int duracionMinutos) {
+        this.id = id;
+        this.activo = true;
+        actualizar(nombre, descripcion, tipo, modalidad, precio, duracionMinutos);
+    }
+
+    public void actualizar(String nombre, String descripcion, String tipo, String modalidad,
+                           BigDecimal precio, int duracionMinutos) {
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.tipo = tipo;
+        this.modalidad = modalidad;
+        this.precio = precio;
+        this.duracionMinutos = duracionMinutos;
+    }
+
+    public void cambiarEstado(boolean activo) {
+        this.activo = activo;
+    }
+
     public String getId() {
         return id;
     }
