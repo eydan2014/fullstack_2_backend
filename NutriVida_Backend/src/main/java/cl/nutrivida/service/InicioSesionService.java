@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -25,11 +26,12 @@ public class InicioSesionService {
         this.hashSinCuenta = codificador.encode(UUID.randomUUID().toString());
     }
 
+    @Transactional
     public LoginRespuesta iniciar(LoginSolicitud datos) {
         if (datos.clave().getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La clave supera el limite de 72 bytes.");
         }
-        Usuario usuario = usuarios.findByCorreo(datos.correo()).filter(Usuario::isActivo).orElse(null);
+        Usuario usuario = usuarios.bloquearPorCorreo(datos.correo()).filter(Usuario::isActivo).orElse(null);
         String hash = usuario == null ? hashSinCuenta : usuario.getClaveHash();
         boolean coincide = codificador.matches(datos.clave(), hash);
         if (!coincide || usuario == null) {
