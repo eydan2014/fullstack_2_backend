@@ -98,6 +98,7 @@ public class SeguridadConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/servicios", "/api/v1/servicios/*").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/api/v1/servicios", "/api/v1/servicios/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/admin/servicios").hasRole("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reportes/atenciones").hasRole("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/servicios").hasRole("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/servicios/*").hasRole("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/servicios/*/estado").hasRole("ADMINISTRADOR")
